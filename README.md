@@ -1,4 +1,4 @@
-# Coronavirus To Simulation
+# Coronavirus Toy Simulation
 
 Philip Mocz (2020)
 Pinceton University
@@ -8,4 +8,6 @@ Free to use -- please give credit!
 
 Simulates a population of interacting particles that can get infected/die
 
-Explore the effects of various isolation measures!
+Explore the effects of various isolation measures! E.g. sinusoidal isolation:
+
+![Coronavirus Simulation with Sinusoidal Isolation](pmocz_corona_sim.png)
