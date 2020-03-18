@@ -9,7 +9,7 @@ clc
 
 % Free to use -- please give credit!
 
-% Simulates a population of interacting particles that can get infected/die
+% Simulates a population of interacting particles
 % Parameters:
 % N = population size in the box (the box size is fixed at 1)
 % p_inf         = probability of infection upon contact per unit time interval
@@ -18,25 +18,24 @@ clc
 % p_death       = probability of death during infection period
 % isolation_fun = isolation function of time (= 1 means regular interaction level; = 0 means no interaction)
 
-Tfinal = 100; % end of simulation
-
 % To Try: try out the effect of the different isolation functions!
 % uncomment the isolation functions you would like to use!
 
 %isolation_fun = @(t) ones(size(t)); % constant function
-%isolation_fun = @(t) exp(-0.05*t); % social distancing
-isolation_fun = @(t) (cos(0.2*t)+1)/2; % sinusoidal distancing
+%isolation_fun = @(t) exp(-0.1*t); % social distancing
+isolation_fun = @(t) (cos(2*t)+1)/2; % sinusoidal distancing
 
 
 %% Parameters
-N = 1e3;
-p_inf = 10;
-r_inf = 0.015;
+N = 2e3;
+p_inf = 1;
+r_inf = 0.02;
 t_inf = 1;
 p_death = 0.02;
 
 t = 0;
 dt = 0.1;
+Tfinal = 20; % end of simulation
 
 
 
@@ -54,6 +53,8 @@ infected = false(size(x));
 infected_t_counter = zeros(size(x));
 infected(1) = true;
 
+immune = false(size(x));
+
 
 %% Simulation
 fh = figure('position',[0 0 400 900]);
@@ -68,7 +69,8 @@ while t < Tfinal
     %% compute infections
     
     num_inf_contacts = contactMtx * double(infected);
-    infected(~infected) = num_inf_contacts(~infected) & (rand(size(infected(~infected))) < p_inf * dt * num_inf_contacts(~infected));
+    cut = (~infected & ~immune);
+    infected(cut) = num_inf_contacts(cut) & (rand(size(infected(cut))) < p_inf * dt * num_inf_contacts(cut));
     
     
     %% move particles (applying the isolation function)
@@ -81,7 +83,7 @@ while t < Tfinal
     recovered = infected_t_counter > t_inf;
     infected(recovered) = false;
     infected_t_counter(recovered) = 0;
-    
+    immune(recovered) = true;
     
     %% apply death / remove particles
     death = infected & (rand(size(infected)) < p_death * dt/t_inf);
@@ -92,6 +94,7 @@ while t < Tfinal
     vy = vy(~death);
     infected = infected(~death);
     infected_t_counter = infected_t_counter(~death);
+    immune = immune(~death);
     
     
     %% advance time
@@ -100,9 +103,10 @@ while t < Tfinal
     
     %% plot
     subplot(3,1,1)
-    plot(x(~infected),y(~infected),'o','color',[0 0 1],'markersize',1)
+    plot(x(~infected),y(~infected),'o','color',[0 0 1],'markerfacecolor',[0 0 1],'markersize',1)
     hold on
-    plot(x(infected),y(infected),'o','color',[1 0 0],'markersize',1)
+    plot(x(immune),y(immune),'o','color',[0 0.6 0],'markerfacecolor',[0 0.4 1],'markersize',1)
+    plot(x(infected & ~immune),y(infected & ~immune),'o','color',[1 0 0],'markerfacecolor',[1 0 0],'markersize',1)
     hold off
     axis([0 1 0 1])
     axis square
@@ -118,8 +122,10 @@ while t < Tfinal
     subplot(3,1,3)
     semilogy(t,sum(infected),'ro') % number infected
     hold on
+    semilogy(t,sum(immune),'o','color',[0 0.8 0]) % number immmune
     semilogy(t,N-numel(x),'ko') % deaths
     if t == dt
+        text(0.75*Tfinal,10.^((log10(N))*0.15),'# immune','color',[0 0.6 0]);
         text(0.75*Tfinal,10.^((log10(N))*0.1),'# infected','color','r');
         text(0.75*Tfinal,10.^((log10(N))*0.05),'# deaths');
         xlabel('time');
